@@ -17,7 +17,7 @@ class DataSet:
             image = Image.open(image_path)
 
             label, index = filename.split('_')
-            label = prefix_label + '_' + label
+            label = int(label)
             
             self.images.append(np.array(image))
             self.labels.append(label)

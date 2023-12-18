@@ -1,6 +1,7 @@
 import numpy as np
-import cv2
 from skimage import filters, morphology
+from scipy.ndimage import convolve
+import matplotlib.pyplot as plt
 
 def Normalize(image, M0, STD0, logging = False):
     """
@@ -126,7 +127,33 @@ def Image_segmentation(image, crop_width, crop_height):
         diff = crop_b - (img_height - 1)
         crop_t = crop_t - diff
         crop_b = crop_b - diff
-        
-    cropped_array = [row[crop_l:crop_r] for row in image[crop_t:crop_b]]
+
+    cropped_array = np.array([row[crop_l:crop_r] for row in image[crop_t:crop_b]])
+    row, col = cropped_array.shape
+
+    if(row < EXPAND_HEIGHT or col < EXPAND_WIDTH):
+        print(' %s %s ' % (row, col))
+        cropped_array = np.resize(cropped_array,(EXPAND_HEIGHT,EXPAND_WIDTH))
 
     return cropped_array
+
+def gabor_filter(array, frequency, theta):
+    # Define parameters for Gabor filter
+    sigma = 5
+    gamma = 0.5
+    psi = 0
+    
+    # Create Gabor kernel
+    radius = 5 * sigma
+    kernel_size = 2 * radius + 1
+    x, y = np.meshgrid(np.linspace(-radius, radius, kernel_size), np.linspace(-radius, radius, kernel_size))
+    
+    x_theta = x * np.cos(theta) + y * np.sin(theta)
+    y_theta = -x * np.sin(theta) + y * np.cos(theta)
+    
+    gabor_kernel = np.exp(-(x_theta**2 + gamma**2 * y_theta**2) / (2 * sigma**2)) * np.cos(2 * np.pi * frequency * x_theta + psi)
+    
+    # Apply Gabor filter to the input array
+    filtered_array = convolve(array, gabor_kernel, mode='constant', cval=0.0)
+    
+    return filtered_array
